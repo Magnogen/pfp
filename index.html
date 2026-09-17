@@ -4,1434 +4,318 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>12×12 Line Editor</title>
-
 <style>
-  * {
-    box-sizing: border-box;
-  }
-
-  html, body {
-    margin: 0;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    background: #111;
-    font-family: sans-serif;
-  }
-
-  canvas {
-    display: block;
-    width: 100vw;
-    height: 100vh;
-    cursor: crosshair;
-    touch-action: none;
-  }
-
-  #controls {
-    position: fixed;
-    top: 10px;
-    left: 10px;
-    right: 10px;
-    z-index: 10;
-
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 6px;
-
-    padding: 8px;
-
-    color: #ddd;
-    background: rgba(0, 0, 0, 0.55);
-    border-radius: 6px;
-
-    backdrop-filter: blur(6px);
-  }
-
-  #controls .slider-control {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-
-    flex: 1 1 180px;
-    min-width: 150px;
-
-    font-size: 12px;
-  }
-
-  #controls .slider-control span:first-child {
-    flex: 0 0 auto;
-  }
-
-  #controls input[type="range"] {
-    flex: 1;
-    min-width: 60px;
-  }
-
-  .slider-value {
-    width: 42px;
-    text-align: right;
-    flex-shrink: 0;
-  }
-
-  button {
-    flex: 1 1 auto;
-
-    min-height: 34px;
-    padding: 6px 9px;
-
-    color: #ddd;
-    background: transparent;
-
-    border: 1px solid #666;
-    border-radius: 4px;
-
-    cursor: pointer;
-    white-space: nowrap;
-  }
-
-  button:hover {
-    background: rgba(255,255,255,.1);
-  }
-
-  button.active {
-    background: rgba(255,255,255,.2);
-    border-color: #aaa;
-  }
-
-  #output {
-    position: fixed;
-    left: 10px;
-    right: 10px;
-    bottom: 10px;
-
-    width: auto;
-    height: 100px;
-
-    padding: 8px;
-
-    color: #ddd;
-    background: rgba(0, 0, 0, 0.7);
-
-    border: 1px solid #555;
-    border-radius: 6px;
-
-    font: 11px monospace;
-    resize: none;
-  }
-
-
-  /* ----------------------------------------------------------
-     PHONE
-     ---------------------------------------------------------- */
-
+  * { box-sizing: border-box; }
+  html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #111; font-family: sans-serif; }
+  canvas { display: block; width: 100vw; height: 100vh; cursor: crosshair; touch-action: none; }
+  #controls { position: fixed; top: 10px; left: 10px; right: 10px; z-index: 10; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 8px; color: #ddd; background: rgba(0, 0, 0, 0.55); border-radius: 6px; backdrop-filter: blur(6px); }
+  #controls .slider-control { display: flex; align-items: center; gap: 6px; flex: 1 1 180px; min-width: 150px; font-size: 12px; }
+  #controls .slider-control span:first-child { flex: 0 0 auto; }
+  #controls input[type="range"] { flex: 1; min-width: 60px; }
+  .slider-value { width: 42px; text-align: right; flex-shrink: 0; }
+  button { flex: 1 1 auto; min-height: 34px; padding: 6px 9px; color: #ddd; background: transparent; border: 1px solid #666; border-radius: 4px; cursor: pointer; white-space: nowrap; }
+  button:hover { background: rgba(255,255,255,.1); }
+  button.active { background: rgba(255,255,255,.2); border-color: #aaa; }
+  #output { position: fixed; left: 10px; right: 10px; bottom: 10px; width: auto; height: 100px; padding: 8px; color: #ddd; background: rgba(0, 0, 0, 0.7); border: 1px solid #555; border-radius: 6px; font: 11px monospace; resize: none; }
   @media (max-width: 600px) {
-
-    #controls {
-      top: 6px;
-      left: 6px;
-      right: 6px;
-
-      padding: 7px;
-      gap: 5px;
-    }
-
-    #controls .slider-control {
-      flex: 1 1 100%;
-      min-width: 0;
-    }
-
-    button {
-      min-height: 32px;
-      padding: 5px 7px;
-      font-size: 12px;
-    }
-
-    #output {
-      left: 6px;
-      right: 6px;
-      bottom: 6px;
-
-      height: 80px;
-
-      font-size: 10px;
-    }
+    #controls { top: 6px; left: 6px; right: 6px; padding: 7px; gap: 5px; }
+    #controls .slider-control { flex: 1 1 100%; min-width: 0; }
+    button { min-height: 32px; padding: 5px 7px; font-size: 12px; }
+    #output { left: 6px; right: 6px; bottom: 6px; height: 80px; font-size: 10px; }
   }
-
-
-  /* ----------------------------------------------------------
-     VERY SMALL PHONES
-     ---------------------------------------------------------- */
-
   @media (max-width: 380px) {
-
-    #controls {
-      gap: 4px;
-      padding: 6px;
-    }
-
-    button {
-      font-size: 11px;
-      padding: 4px 5px;
-    }
-
-    #output {
-      height: 65px;
-    }
+    #controls { gap: 4px; padding: 6px; }
+    button { font-size: 11px; padding: 4px 5px; }
+    #output { height: 65px; }
   }
 </style>
 </head>
-
 <body>
-
 <canvas id="canvas"></canvas>
-
 <div id="controls">
-
-  <!-- HUE -->
-
   <label class="slider-control">
     <span>Hue</span>
-
-    <input
-      id="hue"
-      type="range"
-      min="0"
-      max="360"
-      value="222"
-    >
-
-    <span
-      id="hueValue"
-      class="slider-value"
-    >222°</span>
+    <input id="hue" type="range" min="0" max="360" value="222">
+    <span id="hueValue" class="slider-value">222°</span>
   </label>
-
-
-  <!-- SATURATION -->
-
   <label class="slider-control">
     <span>Sat</span>
-
-    <input
-      id="saturation"
-      type="range"
-      min="0"
-      max="100"
-      value="100"
-    >
-
-    <span
-      id="saturationValue"
-      class="slider-value"
-    >100%</span>
+    <input id="saturation" type="range" min="0" max="100" value="100">
+    <span id="saturationValue" class="slider-value">100%</span>
   </label>
-
-
-  <!-- LIGHTNESS -->
-
   <label class="slider-control">
     <span>Light</span>
-
-    <input
-      id="lightness"
-      type="range"
-      min="0"
-      max="100"
-      value="50"
-    >
-
-    <span
-      id="lightnessValue"
-      class="slider-value"
-    >50%</span>
+    <input id="lightness" type="range" min="0" max="100" value="50">
+    <span id="lightnessValue" class="slider-value">50%</span>
   </label>
-
-
-  <button id="lineMode" class="active">
-    Line
-  </button>
-
-  <button id="shapeMode">
-    Shape
-  </button>
-
-  <button id="fillMode">
-    Fill
-  </button>
-
-  <button id="finish">
-    Finish
-  </button>
-
-  <button id="undo">
-    Undo
-  </button>
-
-  <button id="clear">
-    Clear
-  </button>
-
-  <button id="copy">
-    Copy JS
-  </button>
-
-  <button id="exportPNG">
-    Export PNG
-  </button>
-
+  <button id="lineMode" class="active">Line</button>
+  <button id="shapeMode">Shape</button>
+  <button id="fillMode">Fill</button>
+  <button id="finish">Finish</button>
+  <button id="undo">Undo</button>
+  <button id="clear">Clear</button>
+  <button id="copy">Copy JS</button>
+  <button id="exportPNG">Export PNG</button>
 </div>
-
 <textarea id="output" readonly></textarea>
-
-
 <script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
 
-const canvas =
-  document.getElementById('canvas');
-
-const ctx =
-  canvas.getContext('2d');
-
-
-// ============================================================
-// CONTROLS
-// ============================================================
-
-const hueSlider =
-  document.getElementById('hue');
-
-const hueValue =
-  document.getElementById('hueValue');
-
-
-const saturationSlider =
-  document.getElementById('saturation');
-
-const saturationValue =
-  document.getElementById('saturationValue');
-
-
-const lightnessSlider =
-  document.getElementById('lightness');
-
-const lightnessValue =
-  document.getElementById('lightnessValue');
-
-
-const output =
-  document.getElementById('output');
-
-
-// ============================================================
-// STATE
-// ============================================================
+const hueSlider = document.getElementById('hue');
+const hueValue = document.getElementById('hueValue');
+const saturationSlider = document.getElementById('saturation');
+const saturationValue = document.getElementById('saturationValue');
+const lightnessSlider = document.getElementById('lightness');
+const lightnessValue = document.getElementById('lightnessValue');
+const output = document.getElementById('output');
 
 let shapes = [];
-
 let currentPoints = [];
-
 let mode = 'line';
 
-
-// ============================================================
-// GRADIENT SETTINGS
-// ============================================================
-
 function getGradientSettings() {
-
-  const hue =
-    Number(hueSlider.value);
-
-  const saturation =
-    Number(saturationSlider.value);
-
-  const lightness =
-    Number(lightnessSlider.value);
-
-
-  // Keep the same 25% lightness difference
-  // between the top and bottom of the gradient.
-
-  const topLightness =
-    Math.min(
-      100,
-      lightness
-    );
-
-  const bottomLightness =
-    Math.max(
-      0,
-      lightness - 25
-    );
-
-
-  return {
-    hue,
-    saturation,
-    lightness,
-    topLightness,
-    bottomLightness
-  };
+  const hue = Number(hueSlider.value);
+  const saturation = Number(saturationSlider.value);
+  const lightness = Number(lightnessSlider.value);
+  const topLightness = Math.min(100, lightness);
+  const bottomLightness = Math.max(0, lightness - 25);
+  return { hue, saturation, lightness, topLightness, bottomLightness };
 }
 
-
-// ============================================================
-// CANVAS
-// ============================================================
-
 function resize() {
-
-  const dpr =
-    window.devicePixelRatio || 1;
-
-
-  canvas.width =
-    window.innerWidth * dpr;
-
-  canvas.height =
-    window.innerHeight * dpr;
-
-
-  canvas.style.width =
-    window.innerWidth + 'px';
-
-  canvas.style.height =
-    window.innerHeight + 'px';
-
-
-  ctx.setTransform(
-    dpr,
-    0,
-    0,
-    dpr,
-    0,
-    0
-  );
-
-
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = window.innerWidth * dpr;
+  canvas.height = window.innerHeight * dpr;
+  canvas.style.width = window.innerWidth + 'px';
+  canvas.style.height = window.innerHeight + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   draw();
 }
 
-
-// ============================================================
-// GRID GEOMETRY
-// ============================================================
-
 function getGridGeometry() {
+  const GRID_PADDING = 32;  
+  
+  const availableWidth = Math.max(0, window.innerWidth - (GRID_PADDING * 2));
+  const availableHeight = Math.max(0, window.innerHeight - (GRID_PADDING * 2));
 
-  const spacing =
-    Math.min(
-      window.innerWidth,
-      window.innerHeight
-    ) / 12;
-
-
-  const size =
-    spacing * 12;
-
+  const spacing = Math.min(availableWidth, availableHeight) / 12;
+  const size = spacing * 12;
 
   return {
-
     spacing,
-
-    ox:
-      (window.innerWidth - size) / 2,
-
-    oy:
-      (window.innerHeight - size) / 2
+    ox: (window.innerWidth - size) / 2,
+    oy: (window.innerHeight - size) / 2
   };
 }
 
 
-// ============================================================
-// SCREEN → GRID
-// ============================================================
+function screenToGrid(clientX, clientY) {
+  const { spacing, ox, oy } = getGridGeometry();
 
-function screenToGrid(
-  clientX,
-  clientY
-) {
+  const gx = Math.round((clientX - ox) / spacing);
+  const gy = Math.round((clientY - oy) / spacing);
 
-  const {
-    spacing,
-    ox,
-    oy
-  } =
-    getGridGeometry();
-
-
-  const gx =
-    Math.round(
-      (clientX - ox) / spacing
-    );
-
-
-  const gy =
-    Math.round(
-      (clientY - oy) / spacing
-    );
-
-
-  if (gx < 0 || gx > 12)
+  if (gx < 0 || gx > 12 || gy < 0 || gy > 12) {
     return null;
+  }
 
-
-  if (gy < 0 || gy > 12)
-    return null;
-
-
-  return [
-    gx - 6,
-    6 - gy
-  ];
+  return [gx - 6, 6 - gy];
 }
 
-
-// ============================================================
-// GRID → SCREEN
-// ============================================================
 
 function gridToScreen([x, y]) {
-
-  const {
-    spacing,
-    ox,
-    oy
-  } =
-    getGridGeometry();
-
-
-  return {
-
-    x:
-      ox + (x + 6) * spacing,
-
-    y:
-      oy + (6 - y) * spacing
-  };
+  const { spacing, ox, oy } = getGridGeometry();
+  return { x: ox + (x + 6) * spacing, y: oy + (6 - y) * spacing };
 }
-
-
-// ============================================================
-// BACKGROUND
-// ============================================================
 
 function drawBackground() {
-
-  const width =
-    window.innerWidth;
-
-  const height =
-    window.innerHeight;
-
-
-  const {
-    hue,
-    saturation,
-    topLightness,
-    bottomLightness
-  } =
-    getGradientSettings();
-
-
-  const gradient =
-    ctx.createLinearGradient(
-      0,
-      0,
-      0,
-      height
-    );
-
-
-  gradient.addColorStop(
-    0,
-    `hsl(${hue}deg ${saturation}% ${topLightness}%)`
-  );
-
-
-  gradient.addColorStop(
-    1,
-    `hsl(${hue}deg ${saturation}% ${bottomLightness}%)`
-  );
-
-
-  ctx.fillStyle =
-    gradient;
-
-
-  ctx.fillRect(
-    0,
-    0,
-    width,
-    height
-  );
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  const { hue, saturation, topLightness, bottomLightness } = getGradientSettings();
+  const gradient = ctx.createLinearGradient(0, 0, 0, height);
+  gradient.addColorStop(0, `hsl(${hue}deg ${saturation}% ${topLightness}%)`);
+  gradient.addColorStop(1, `hsl(${hue}deg ${saturation}% ${bottomLightness}%)`);
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, width, height);
 }
-
-
-// ============================================================
-// GRID
-// ============================================================
 
 function drawGrid() {
-
-  const {
-    spacing,
-    ox,
-    oy
-  } =
-    getGridGeometry();
-
-
-  ctx.strokeStyle =
-    'rgba(255,255,255,0.16)';
-
+  const { spacing, ox, oy } = getGridGeometry();
+  ctx.strokeStyle = 'rgba(255,255,255,0.32)';
   ctx.lineWidth = 1;
-
-
   for (let i = 0; i <= 12; i++) {
-
     ctx.beginPath();
-
-    ctx.moveTo(
-      ox + i * spacing,
-      oy
-    );
-
-    ctx.lineTo(
-      ox + i * spacing,
-      oy + 12 * spacing
-    );
-
+    ctx.moveTo(ox + i * spacing, oy);
+    ctx.lineTo(ox + i * spacing, oy + 12 * spacing);
     ctx.stroke();
-
-
     ctx.beginPath();
-
-    ctx.moveTo(
-      ox,
-      oy + i * spacing
-    );
-
-    ctx.lineTo(
-      ox + 12 * spacing,
-      oy + i * spacing
-    );
-
+    ctx.moveTo(ox, oy + i * spacing);
+    ctx.lineTo(ox + 12 * spacing, oy + i * spacing);
     ctx.stroke();
   }
 }
-
-
-// ============================================================
-// DRAW A SHAPE
-// ============================================================
 
 function drawShape(shape) {
-
-  const points =
-    shape.points;
-
-
-  if (points.length < 2)
-    return;
-
-
+  const points = shape.points;
+  if (points.length < 2) return;
   ctx.beginPath();
-
-
-  const first =
-    gridToScreen(points[0]);
-
-
-  ctx.moveTo(
-    first.x,
-    first.y
-  );
-
-
-  for (
-    const point of points.slice(1)
-  ) {
-
-    const p =
-      gridToScreen(point);
-
-
-    ctx.lineTo(
-      p.x,
-      p.y
-    );
+  const first = gridToScreen(points[0]);
+  ctx.moveTo(first.x, first.y);
+  for (const point of points.slice(1)) {
+    const p = gridToScreen(point);
+    ctx.lineTo(p.x, p.y);
   }
-
-
-  if (shape.closed) {
-    ctx.closePath();
-  }
-
-
-  // ----------------------------------------------------------
-  // BLACK FILL
-  // ----------------------------------------------------------
-
-  if (
-    shape.fill &&
-    shape.closed
-  ) {
-
-    ctx.fillStyle =
-      'hsl(0deg 0% 6%)';
-
-
+  if (shape.closed) { ctx.closePath(); }
+  if (shape.fill && shape.closed) {
+    ctx.fillStyle = 'hsl(0deg 0% 6%)';
     ctx.fill();
   }
-
-
-  // ----------------------------------------------------------
-  // OFF-WHITE STROKE
-  // ----------------------------------------------------------
-
   if (shape.stroke) {
-
-    ctx.lineWidth =
-      Math.min(
-        window.innerWidth,
-        window.innerHeight
-      ) / 16;
-
-
-    ctx.lineJoin =
-      'round';
-
-
-    ctx.lineCap =
-      'round';
-
-
-    ctx.strokeStyle =
-      'hsl(0deg 0% 88%)';
-
-
+    ctx.lineWidth = Math.min(window.innerWidth, window.innerHeight) / 16;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = 'hsl(0deg 0% 88%)';
     ctx.stroke();
   }
 }
 
-
-// ============================================================
-// CURRENT SHAPE PREVIEW
-// ============================================================
-
 function drawCurrent() {
-
-  if (currentPoints.length === 0) {
-    return;
-  }
-
-
+  if (currentPoints.length === 0) return;
   let previewShape;
-
-
   if (mode === 'line') {
-
-    previewShape = {
-
-      points: currentPoints,
-
-      closed: false,
-
-      fill: false,
-
-      stroke: true
-    };
-
-
+    previewShape = { points: currentPoints, closed: false, fill: false, stroke: true };
   } else if (mode === 'shape') {
-
-    previewShape = {
-
-      points: currentPoints,
-
-      closed: true,
-
-      fill: true,
-
-      stroke: true
-    };
-
-
+    previewShape = { points: currentPoints, closed: true, fill: true, stroke: true };
   } else if (mode === 'fill') {
-
-    previewShape = {
-
-      points: currentPoints,
-
-      closed: true,
-
-      fill: true,
-
-      stroke: false
-    };
+    previewShape = { points: currentPoints, closed: true, fill: true, stroke: false };
   }
-
-
   drawShape(previewShape);
-
-
-  const last =
-    gridToScreen(
-      currentPoints[
-        currentPoints.length - 1
-      ]
-    );
-
-
-  ctx.fillStyle =
-    'hsl(0deg 0% 88%)';
-
-
+  const last = gridToScreen(currentPoints[currentPoints.length - 1]);
+  ctx.fillStyle = 'hsl(0deg 0% 88%)';
   ctx.beginPath();
-
-
-  ctx.arc(
-    last.x,
-    last.y,
-    6,
-    0,
-    Math.PI * 2
-  );
-
-
+  ctx.arc(last.x, last.y, 6, 0, Math.PI * 2);
   ctx.fill();
 }
 
-
-// ============================================================
-// MAIN DRAW
-// ============================================================
-
 function draw() {
-
   drawBackground();
-
   drawGrid();
-
-
-  for (const shape of shapes) {
-
-    drawShape(shape);
-  }
-
-
+  for (const shape of shapes) { drawShape(shape); }
   drawCurrent();
-
   updateOutput();
 }
 
-
-// ============================================================
-// MOUSE
-// ============================================================
-
-canvas.addEventListener(
-  'click',
-  event => {
-
-    const point =
-      screenToGrid(
-        event.clientX,
-        event.clientY
-      );
-
-
-    if (!point)
-      return;
-
-
-    currentPoints.push(point);
-
-
-    if (
-      mode === 'line' &&
-      currentPoints.length === 2
-    ) {
-
-      shapes.push({
-
-        points: [
-          ...currentPoints
-        ],
-
-        closed: false,
-
-        fill: false,
-
-        stroke: true
-      });
-
-
-      currentPoints = [];
-    }
-
-
-    draw();
+canvas.addEventListener('click', event => {
+  const point = screenToGrid(event.clientX, event.clientY);
+  if (!point) return;
+  currentPoints.push(point);
+  if (mode === 'line' && currentPoints.length === 2) {
+    shapes.push({ points: [...currentPoints], closed: false, fill: false, stroke: true });
+    currentPoints = [];
   }
-);
+  draw();
+});
 
+document.getElementById('finish').addEventListener('click', () => {
+  if (currentPoints.length < 2) return;
+  if (mode === 'shape') {
+    shapes.push({ points: [...currentPoints], closed: true, fill: true, stroke: true });
+  } else if (mode === 'fill') {
+    shapes.push({ points: [...currentPoints], closed: true, fill: true, stroke: false });
+  } else if (mode === 'line') {
+    shapes.push({ points: [...currentPoints], closed: false, fill: false, stroke: true });
+  }
+  currentPoints = [];
+  draw();
+});
 
-// ============================================================
-// FINISH
-// ============================================================
-
-document
-  .getElementById('finish')
-  .addEventListener(
-    'click',
-    () => {
-
-      if (currentPoints.length < 2) {
-        return;
-      }
-
-
-      if (mode === 'shape') {
-
-        shapes.push({
-
-          points: [
-            ...currentPoints
-          ],
-
-          closed: true,
-
-          fill: true,
-
-          stroke: true
-        });
-
-
-      } else if (mode === 'fill') {
-
-        shapes.push({
-
-          points: [
-            ...currentPoints
-          ],
-
-          closed: true,
-
-          fill: true,
-
-          stroke: false
-        });
-
-
-      } else if (mode === 'line') {
-
-        shapes.push({
-
-          points: [
-            ...currentPoints
-          ],
-
-          closed: false,
-
-          fill: false,
-
-          stroke: true
-        });
-      }
-
-
-      currentPoints = [];
-
-      draw();
-    }
-  );
-
-
-// ============================================================
-// MODE BUTTONS
-// ============================================================
-
-document
-  .getElementById('lineMode')
-  .addEventListener(
-    'click',
-    () => {
-
-      mode = 'line';
-
-      currentPoints = [];
-
-      updateModeButtons();
-
-      draw();
-    }
-  );
-
-
-document
-  .getElementById('shapeMode')
-  .addEventListener(
-    'click',
-    () => {
-
-      mode = 'shape';
-
-      currentPoints = [];
-
-      updateModeButtons();
-
-      draw();
-    }
-  );
-
-
-document
-  .getElementById('fillMode')
-  .addEventListener(
-    'click',
-    () => {
-
-      mode = 'fill';
-
-      currentPoints = [];
-
-      updateModeButtons();
-
-      draw();
-    }
-  );
-
+document.getElementById('lineMode').addEventListener('click', () => { mode = 'line'; currentPoints = []; updateModeButtons(); draw(); });
+document.getElementById('shapeMode').addEventListener('click', () => { mode = 'shape'; currentPoints = []; updateModeButtons(); draw(); });
+document.getElementById('fillMode').addEventListener('click', () => { mode = 'fill'; currentPoints = []; updateModeButtons(); draw(); });
 
 function updateModeButtons() {
-
-  document
-    .getElementById('lineMode')
-    .classList.toggle(
-      'active',
-      mode === 'line'
-    );
-
-
-  document
-    .getElementById('shapeMode')
-    .classList.toggle(
-      'active',
-      mode === 'shape'
-    );
-
-
-  document
-    .getElementById('fillMode')
-    .classList.toggle(
-      'active',
-      mode === 'fill'
-    );
+  document.getElementById('lineMode').classList.toggle('active', mode === 'line');
+  document.getElementById('shapeMode').classList.toggle('active', mode === 'shape');
+  document.getElementById('fillMode').classList.toggle('active', mode === 'fill');
 }
 
+document.getElementById('undo').addEventListener('click', () => {
+  if (currentPoints.length) { currentPoints.pop(); } else { shapes.pop(); }
+  draw();
+});
 
-// ============================================================
-// UNDO
-// ============================================================
+document.getElementById('clear').addEventListener('click', () => { shapes = []; currentPoints = []; draw(); });
+hueSlider.addEventListener('input', () => { hueValue.textContent = `${hueSlider.value}°`; draw(); });
+saturationSlider.addEventListener('input', () => { saturationValue.textContent = `${saturationSlider.value}%`; draw(); });
+lightnessSlider.addEventListener('input', () => { lightnessValue.textContent = `${lightnessSlider.value}%`; draw(); });
 
-document
-  .getElementById('undo')
-  .addEventListener(
-    'click',
-    () => {
+document.getElementById('copy').addEventListener('click', async () => {
+  await navigator.clipboard.writeText(getJavascript());
+  const button = document.getElementById('copy');
+  button.textContent = 'Copied!';
+  setTimeout(() => { button.textContent = 'Copy JS'; }, 1000);
+});
 
-      if (currentPoints.length) {
+document.getElementById('exportPNG').addEventListener('click', () => {
+  const size = 1024;
+  const exportCanvas = document.createElement('canvas');
+  exportCanvas.width = size;
+  exportCanvas.height = size;
+  const exportCtx = exportCanvas.getContext('2d');
 
-        currentPoints.pop();
+  const { hue, saturation, topLightness, bottomLightness } = getGradientSettings();
+  const gradient = exportCtx.createLinearGradient(0, 0, 0, size);
+  gradient.addColorStop(0, `hsl(${hue}deg ${saturation}% ${topLightness}%)`);
+  gradient.addColorStop(1, `hsl(${hue}deg ${saturation}% ${bottomLightness}%)`);
+  exportCtx.fillStyle = gradient;
+  exportCtx.fillRect(0, 0, size, size);
 
-      } else {
-
-        shapes.pop();
-      }
-
-
-      draw();
-    }
-  );
-
-
-// ============================================================
-// CLEAR
-// ============================================================
-
-document
-  .getElementById('clear')
-  .addEventListener(
-    'click',
-    () => {
-
-      shapes = [];
-
-      currentPoints = [];
-
-      draw();
-    }
-  );
-
-
-// ============================================================
-// HUE
-// ============================================================
-
-hueSlider.addEventListener(
-  'input',
-  () => {
-
-    hueValue.textContent =
-      `${hueSlider.value}°`;
-
-    draw();
+  function exportPoint([x, y]) {
+    return { x: (x + 6) * (size / 12), y: (6 - y) * (size / 12) };
   }
-);
 
-
-// ============================================================
-// SATURATION
-// ============================================================
-
-saturationSlider.addEventListener(
-  'input',
-  () => {
-
-    saturationValue.textContent =
-      `${saturationSlider.value}%`;
-
-    draw();
-  }
-);
-
-
-// ============================================================
-// LIGHTNESS
-// ============================================================
-
-lightnessSlider.addEventListener(
-  'input',
-  () => {
-
-    lightnessValue.textContent =
-      `${lightnessSlider.value}%`;
-
-    draw();
-  }
-);
-
-
-// ============================================================
-// COPY
-// ============================================================
-
-document
-  .getElementById('copy')
-  .addEventListener(
-    'click',
-    async () => {
-
-      await navigator.clipboard.writeText(
-        getJavascript()
-      );
-
-
-      const button =
-        document.getElementById('copy');
-
-
-      button.textContent =
-        'Copied!';
-
-
-      setTimeout(
-        () => {
-
-          button.textContent =
-            'Copy JS';
-
-        },
-        1000
-      );
+  for (const shape of shapes) {
+    if (shape.points.length < 2) continue;
+    exportCtx.beginPath();
+    const first = exportPoint(shape.points[0]);
+    exportCtx.moveTo(first.x, first.y);
+    for (const point of shape.points.slice(1)) {
+      const p = exportPoint(point);
+      exportCtx.lineTo(p.x, p.y);
     }
-  );
-
-
-// ============================================================
-// EXPORT PNG
-// ============================================================
-//
-// Renders the artwork independently at exactly 1024×1024.
-//
-// The editor grid and UI are NOT included.
-// ============================================================
-
-document
-  .getElementById('exportPNG')
-  .addEventListener(
-    'click',
-    () => {
-
-      const size = 1024;
-
-
-      const exportCanvas =
-        document.createElement('canvas');
-
-
-      exportCanvas.width =
-        size;
-
-      exportCanvas.height =
-        size;
-
-
-      const exportCtx =
-        exportCanvas.getContext('2d');
-
-
-      // --------------------------------------------------------
-      // BACKGROUND
-      // --------------------------------------------------------
-
-      const {
-        hue,
-        saturation,
-        topLightness,
-        bottomLightness
-      } =
-        getGradientSettings();
-
-
-      const gradient =
-        exportCtx.createLinearGradient(
-          0,
-          0,
-          0,
-          size
-        );
-
-
-      gradient.addColorStop(
-        0,
-        `hsl(${hue}deg ${saturation}% ${topLightness}%)`
-      );
-
-
-      gradient.addColorStop(
-        1,
-        `hsl(${hue}deg ${saturation}% ${bottomLightness}%)`
-      );
-
-
-      exportCtx.fillStyle =
-        gradient;
-
-
-      exportCtx.fillRect(
-        0,
-        0,
-        size,
-        size
-      );
-
-
-      // --------------------------------------------------------
-      // GRID → 1024PX EXPORT COORDINATES
-      // --------------------------------------------------------
-
-      function exportPoint([x, y]) {
-
-        return {
-
-          x:
-            (x + 6) *
-            (size / 12),
-
-          y:
-            (6 - y) *
-            (size / 12)
-        };
-      }
-
-
-      // --------------------------------------------------------
-      // DRAW SHAPES
-      // --------------------------------------------------------
-
-      for (const shape of shapes) {
-
-        if (
-          shape.points.length < 2
-        ) {
-          continue;
-        }
-
-
-        exportCtx.beginPath();
-
-
-        const first =
-          exportPoint(
-            shape.points[0]
-          );
-
-
-        exportCtx.moveTo(
-          first.x,
-          first.y
-        );
-
-
-        for (
-          const point of
-          shape.points.slice(1)
-        ) {
-
-          const p =
-            exportPoint(point);
-
-
-          exportCtx.lineTo(
-            p.x,
-            p.y
-          );
-        }
-
-
-        if (shape.closed) {
-          exportCtx.closePath();
-        }
-
-
-        // ------------------------------------------------------
-        // BLACK FILL
-        // ------------------------------------------------------
-
-        if (
-          shape.fill &&
-          shape.closed
-        ) {
-
-          exportCtx.fillStyle =
-            'hsl(0deg 0% 6%)';
-
-
-          exportCtx.fill();
-        }
-
-
-        // ------------------------------------------------------
-        // OFF-WHITE STROKE
-        // ------------------------------------------------------
-
-        if (shape.stroke) {
-
-          exportCtx.lineWidth =
-            size / 16;
-
-
-          exportCtx.lineJoin =
-            'round';
-
-
-          exportCtx.lineCap =
-            'round';
-
-
-          exportCtx.strokeStyle =
-            'hsl(0deg 0% 88%)';
-
-
-          exportCtx.stroke();
-        }
-      }
-
-
-      // --------------------------------------------------------
-      // DOWNLOAD
-      // --------------------------------------------------------
-
-      exportCanvas.toBlob(
-        blob => {
-
-          if (!blob)
-            return;
-
-
-          const url =
-            URL.createObjectURL(blob);
-
-
-          const link =
-            document.createElement('a');
-
-
-          link.href =
-            url;
-
-
-          link.download =
-            '12x12-art.png';
-
-
-          document.body.appendChild(
-            link
-          );
-
-
-          link.click();
-
-          link.remove();
-
-
-          URL.revokeObjectURL(
-            url
-          );
-        },
-
-        'image/png'
-      );
+    if (shape.closed) { exportCtx.closePath(); }
+    if (shape.fill && shape.closed) {
+      exportCtx.fillStyle = 'hsl(0deg 0% 6%)';
+      exportCtx.fill();
     }
-  );
+    if (shape.stroke) {
+      exportCtx.lineWidth = size / 16;
+      exportCtx.lineJoin = 'round';
+      exportCtx.lineCap = 'round';
+      exportCtx.strokeStyle = 'hsl(0deg 0% 88%)';
+      exportCtx.stroke();
+    }
+  }
 
+  exportCanvas.toBlob(blob => {
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = '12x12-art.png';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }, 'image/png');
+});
 
-// ============================================================
-// OUTPUT
-// ============================================================
+function getJavascript() { return `const shapes = ${JSON.stringify(shapes, null, 2)};`; }
+function updateOutput() { output.value = getJavascript(); }
 
-function getJavascript() {
-
-  return `const shapes = ${JSON.stringify(
-    shapes,
-    null,
-    2
-  )};`;
-}
-
-
-function updateOutput() {
-
-  output.value =
-    getJavascript();
-}
-
-
-// ============================================================
-// START
-// ============================================================
-
-window.addEventListener(
-  'resize',
-  resize
-);
-
-
+window.addEventListener('resize', resize);
 resize();
-
 </script>
-
 </body>
 </html>
