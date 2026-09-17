@@ -48,21 +48,30 @@
     backdrop-filter: blur(6px);
   }
 
-  #controls .label {
+  #controls .slider-control {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    flex: 1 1 180px;
+    min-width: 150px;
+
     font-size: 12px;
+  }
+
+  #controls .slider-control span:first-child {
     flex: 0 0 auto;
   }
 
   #controls input[type="range"] {
-    flex: 1 1 100px;
-    min-width: 80px;
+    flex: 1;
+    min-width: 60px;
   }
 
-  #hueValue {
-    width: 38px;
+  .slider-value {
+    width: 42px;
     text-align: right;
     flex-shrink: 0;
-    font-size: 12px;
   }
 
   button {
@@ -127,12 +136,9 @@
       gap: 5px;
     }
 
-    #controls .label {
-      flex-basis: auto;
-    }
-
-    #controls input[type="range"] {
-      flex: 1 1 100px;
+    #controls .slider-control {
+      flex: 1 1 100%;
+      min-width: 0;
     }
 
     button {
@@ -182,17 +188,45 @@
 
 <div id="controls">
 
-  <span class="label">Hue</span>
+  <!-- HUE -->
 
-  <input
-    id="hue"
-    type="range"
-    min="0"
-    max="360"
-    value="222"
-  >
+  <label class="slider-control">
+    <span>Hue</span>
 
-  <span id="hueValue">222°</span>
+    <input
+      id="hue"
+      type="range"
+      min="0"
+      max="360"
+      value="222"
+    >
+
+    <span
+      id="hueValue"
+      class="slider-value"
+    >222°</span>
+  </label>
+
+
+  <!-- SATURATION -->
+
+  <label class="slider-control">
+    <span>Sat</span>
+
+    <input
+      id="saturation"
+      type="range"
+      min="0"
+      max="100"
+      value="100"
+    >
+
+    <span
+      id="saturationValue"
+      class="slider-value"
+    >100%</span>
+  </label>
+
 
   <button id="lineMode" class="active">
     Line
@@ -233,12 +267,29 @@
 
 <script>
 
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
+const canvas =
+  document.getElementById('canvas');
 
-const hueSlider = document.getElementById('hue');
-const hueValue = document.getElementById('hueValue');
-const output = document.getElementById('output');
+const ctx =
+  canvas.getContext('2d');
+
+
+const hueSlider =
+  document.getElementById('hue');
+
+const hueValue =
+  document.getElementById('hueValue');
+
+
+const saturationSlider =
+  document.getElementById('saturation');
+
+const saturationValue =
+  document.getElementById('saturationValue');
+
+
+const output =
+  document.getElementById('output');
 
 
 // ============================================================
@@ -261,17 +312,20 @@ function resize() {
   const dpr =
     window.devicePixelRatio || 1;
 
+
   canvas.width =
     window.innerWidth * dpr;
 
   canvas.height =
     window.innerHeight * dpr;
 
+
   canvas.style.width =
     window.innerWidth + 'px';
 
   canvas.style.height =
     window.innerHeight + 'px';
+
 
   ctx.setTransform(
     dpr,
@@ -281,6 +335,7 @@ function resize() {
     0,
     0
   );
+
 
   draw();
 }
@@ -298,10 +353,13 @@ function getGridGeometry() {
       window.innerHeight
     ) / 12;
 
+
   const size =
     spacing * 12;
 
+
   return {
+
     spacing,
 
     ox:
@@ -317,13 +375,17 @@ function getGridGeometry() {
 // SCREEN → GRID
 // ============================================================
 
-function screenToGrid(clientX, clientY) {
+function screenToGrid(
+  clientX,
+  clientY
+) {
 
   const {
     spacing,
     ox,
     oy
-  } = getGridGeometry();
+  } =
+    getGridGeometry();
 
 
   const gx =
@@ -338,8 +400,12 @@ function screenToGrid(clientX, clientY) {
     );
 
 
-  if (gx < 0 || gx > 12) return null;
-  if (gy < 0 || gy > 12) return null;
+  if (gx < 0 || gx > 12)
+    return null;
+
+
+  if (gy < 0 || gy > 12)
+    return null;
 
 
   return [
@@ -359,10 +425,12 @@ function gridToScreen([x, y]) {
     spacing,
     ox,
     oy
-  } = getGridGeometry();
+  } =
+    getGridGeometry();
 
 
   return {
+
     x:
       ox + (x + 6) * spacing,
 
@@ -384,8 +452,13 @@ function drawBackground() {
   const height =
     window.innerHeight;
 
+
   const hue =
     Number(hueSlider.value);
+
+
+  const saturation =
+    Number(saturationSlider.value);
 
 
   const gradient =
@@ -399,13 +472,13 @@ function drawBackground() {
 
   gradient.addColorStop(
     0,
-    `hsl(${hue}deg 100% 50%)`
+    `hsl(${hue}deg ${saturation}% 50%)`
   );
 
 
   gradient.addColorStop(
     1,
-    `hsl(${hue}deg 100% 25%)`
+    `hsl(${hue}deg ${saturation}% 25%)`
   );
 
 
@@ -432,7 +505,8 @@ function drawGrid() {
     spacing,
     ox,
     oy
-  } = getGridGeometry();
+  } =
+    getGridGeometry();
 
 
   ctx.strokeStyle =
@@ -442,6 +516,8 @@ function drawGrid() {
 
 
   for (let i = 0; i <= 12; i++) {
+
+    // Vertical
 
     ctx.beginPath();
 
@@ -457,6 +533,8 @@ function drawGrid() {
 
     ctx.stroke();
 
+
+    // Horizontal
 
     ctx.beginPath();
 
@@ -484,7 +562,9 @@ function drawShape(shape) {
   const points =
     shape.points;
 
-  if (points.length < 2) return;
+
+  if (points.length < 2)
+    return;
 
 
   ctx.beginPath();
@@ -493,16 +573,20 @@ function drawShape(shape) {
   const first =
     gridToScreen(points[0]);
 
+
   ctx.moveTo(
     first.x,
     first.y
   );
 
 
-  for (const point of points.slice(1)) {
+  for (
+    const point of points.slice(1)
+  ) {
 
     const p =
       gridToScreen(point);
+
 
     ctx.lineTo(
       p.x,
@@ -528,6 +612,7 @@ function drawShape(shape) {
     ctx.fillStyle =
       'hsl(0deg 0% 6%)';
 
+
     ctx.fill();
   }
 
@@ -544,14 +629,18 @@ function drawShape(shape) {
         window.innerHeight
       ) / 16;
 
+
     ctx.lineJoin =
       'round';
+
 
     ctx.lineCap =
       'round';
 
+
     ctx.strokeStyle =
       'hsl(0deg 0% 88%)';
+
 
     ctx.stroke();
   }
@@ -575,27 +664,41 @@ function drawCurrent() {
   if (mode === 'line') {
 
     previewShape = {
+
       points: currentPoints,
+
       closed: false,
+
       fill: false,
+
       stroke: true
     };
+
 
   } else if (mode === 'shape') {
 
     previewShape = {
+
       points: currentPoints,
+
       closed: true,
+
       fill: true,
+
       stroke: true
     };
+
 
   } else if (mode === 'fill') {
 
     previewShape = {
+
       points: currentPoints,
+
       closed: true,
+
       fill: true,
+
       stroke: false
     };
   }
@@ -603,6 +706,8 @@ function drawCurrent() {
 
   drawShape(previewShape);
 
+
+  // Highlight most recent point.
 
   const last =
     gridToScreen(
@@ -618,6 +723,7 @@ function drawCurrent() {
 
   ctx.beginPath();
 
+
   ctx.arc(
     last.x,
     last.y,
@@ -625,6 +731,7 @@ function drawCurrent() {
     0,
     Math.PI * 2
   );
+
 
   ctx.fill();
 }
@@ -642,6 +749,7 @@ function draw() {
 
 
   for (const shape of shapes) {
+
     drawShape(shape);
   }
 
@@ -667,11 +775,15 @@ canvas.addEventListener(
       );
 
 
-    if (!point) return;
+    if (!point)
+      return;
 
 
     currentPoints.push(point);
 
+
+    // Line mode:
+    // every pair becomes a separate line.
 
     if (
       mode === 'line' &&
@@ -679,11 +791,18 @@ canvas.addEventListener(
     ) {
 
       shapes.push({
-        points: [...currentPoints],
+
+        points: [
+          ...currentPoints
+        ],
+
         closed: false,
+
         fill: false,
+
         stroke: true
       });
+
 
       currentPoints = [];
     }
@@ -712,27 +831,47 @@ document
       if (mode === 'shape') {
 
         shapes.push({
-          points: [...currentPoints],
+
+          points: [
+            ...currentPoints
+          ],
+
           closed: true,
+
           fill: true,
+
           stroke: true
         });
+
 
       } else if (mode === 'fill') {
 
         shapes.push({
-          points: [...currentPoints],
+
+          points: [
+            ...currentPoints
+          ],
+
           closed: true,
+
           fill: true,
+
           stroke: false
         });
+
 
       } else if (mode === 'line') {
 
         shapes.push({
-          points: [...currentPoints],
+
+          points: [
+            ...currentPoints
+          ],
+
           closed: false,
+
           fill: false,
+
           stroke: true
         });
       }
@@ -888,6 +1027,22 @@ hueSlider.addEventListener(
 
 
 // ============================================================
+// SATURATION
+// ============================================================
+
+saturationSlider.addEventListener(
+  'input',
+  () => {
+
+    saturationValue.textContent =
+      `${saturationSlider.value}%`;
+
+    draw();
+  }
+);
+
+
+// ============================================================
 // COPY
 // ============================================================
 
@@ -912,8 +1067,10 @@ document
 
       setTimeout(
         () => {
+
           button.textContent =
             'Copy JS';
+
         },
         1000
       );
@@ -927,7 +1084,7 @@ document
 //
 // Renders the artwork independently at exactly 1024×1024.
 //
-// The editor grid is NOT included in the exported image.
+// The editor grid and UI are NOT included.
 // ============================================================
 
 document
@@ -938,11 +1095,17 @@ document
 
       const size = 1024;
 
+
       const exportCanvas =
         document.createElement('canvas');
 
-      exportCanvas.width = size;
-      exportCanvas.height = size;
+
+      exportCanvas.width =
+        size;
+
+      exportCanvas.height =
+        size;
+
 
       const exportCtx =
         exportCanvas.getContext('2d');
@@ -955,6 +1118,11 @@ document
       const hue =
         Number(hueSlider.value);
 
+
+      const saturation =
+        Number(saturationSlider.value);
+
+
       const gradient =
         exportCtx.createLinearGradient(
           0,
@@ -963,18 +1131,22 @@ document
           size
         );
 
+
       gradient.addColorStop(
         0,
-        `hsl(${hue}deg 100% 50%)`
+        `hsl(${hue}deg ${saturation}% 50%)`
       );
+
 
       gradient.addColorStop(
         1,
-        `hsl(${hue}deg 100% 25%)`
+        `hsl(${hue}deg ${saturation}% 25%)`
       );
+
 
       exportCtx.fillStyle =
         gradient;
+
 
       exportCtx.fillRect(
         0,
@@ -991,11 +1163,14 @@ document
       function exportPoint([x, y]) {
 
         return {
+
           x:
-            (x + 6) * (size / 12),
+            (x + 6) *
+            (size / 12),
 
           y:
-            (6 - y) * (size / 12)
+            (6 - y) *
+            (size / 12)
         };
       }
 
@@ -1006,7 +1181,9 @@ document
 
       for (const shape of shapes) {
 
-        if (shape.points.length < 2) {
+        if (
+          shape.points.length < 2
+        ) {
           continue;
         }
 
@@ -1015,7 +1192,10 @@ document
 
 
         const first =
-          exportPoint(shape.points[0]);
+          exportPoint(
+            shape.points[0]
+          );
+
 
         exportCtx.moveTo(
           first.x,
@@ -1024,11 +1204,13 @@ document
 
 
         for (
-          const point of shape.points.slice(1)
+          const point of
+          shape.points.slice(1)
         ) {
 
           const p =
             exportPoint(point);
+
 
           exportCtx.lineTo(
             p.x,
@@ -1054,6 +1236,7 @@ document
           exportCtx.fillStyle =
             'hsl(0deg 0% 6%)';
 
+
           exportCtx.fill();
         }
 
@@ -1067,14 +1250,18 @@ document
           exportCtx.lineWidth =
             size / 16;
 
+
           exportCtx.lineJoin =
             'round';
+
 
           exportCtx.lineCap =
             'round';
 
+
           exportCtx.strokeStyle =
             'hsl(0deg 0% 88%)';
+
 
           exportCtx.stroke();
         }
@@ -1088,26 +1275,41 @@ document
       exportCanvas.toBlob(
         blob => {
 
-          if (!blob) return;
+          if (!blob)
+            return;
 
 
           const url =
             URL.createObjectURL(blob);
 
+
           const link =
             document.createElement('a');
 
-          link.href = url;
-          link.download = '12x12-art.png';
 
-          document.body.appendChild(link);
+          link.href =
+            url;
+
+
+          link.download =
+            '12x12-art.png';
+
+
+          document.body.appendChild(
+            link
+          );
+
 
           link.click();
 
           link.remove();
 
-          URL.revokeObjectURL(url);
+
+          URL.revokeObjectURL(
+            url
+          );
         },
+
         'image/png'
       );
     }
@@ -1143,6 +1345,7 @@ window.addEventListener(
   'resize',
   resize
 );
+
 
 resize();
 
