@@ -228,6 +228,26 @@
   </label>
 
 
+  <!-- LIGHTNESS -->
+
+  <label class="slider-control">
+    <span>Light</span>
+
+    <input
+      id="lightness"
+      type="range"
+      min="0"
+      max="100"
+      value="50"
+    >
+
+    <span
+      id="lightnessValue"
+      class="slider-value"
+    >50%</span>
+  </label>
+
+
   <button id="lineMode" class="active">
     Line
   </button>
@@ -274,6 +294,10 @@ const ctx =
   canvas.getContext('2d');
 
 
+// ============================================================
+// CONTROLS
+// ============================================================
+
 const hueSlider =
   document.getElementById('hue');
 
@@ -286,6 +310,13 @@ const saturationSlider =
 
 const saturationValue =
   document.getElementById('saturationValue');
+
+
+const lightnessSlider =
+  document.getElementById('lightness');
+
+const lightnessValue =
+  document.getElementById('lightnessValue');
 
 
 const output =
@@ -301,6 +332,48 @@ let shapes = [];
 let currentPoints = [];
 
 let mode = 'line';
+
+
+// ============================================================
+// GRADIENT SETTINGS
+// ============================================================
+
+function getGradientSettings() {
+
+  const hue =
+    Number(hueSlider.value);
+
+  const saturation =
+    Number(saturationSlider.value);
+
+  const lightness =
+    Number(lightnessSlider.value);
+
+
+  // Keep the same 25% lightness difference
+  // between the top and bottom of the gradient.
+
+  const topLightness =
+    Math.min(
+      100,
+      lightness
+    );
+
+  const bottomLightness =
+    Math.max(
+      0,
+      lightness - 25
+    );
+
+
+  return {
+    hue,
+    saturation,
+    lightness,
+    topLightness,
+    bottomLightness
+  };
+}
 
 
 // ============================================================
@@ -453,12 +526,13 @@ function drawBackground() {
     window.innerHeight;
 
 
-  const hue =
-    Number(hueSlider.value);
-
-
-  const saturation =
-    Number(saturationSlider.value);
+  const {
+    hue,
+    saturation,
+    topLightness,
+    bottomLightness
+  } =
+    getGradientSettings();
 
 
   const gradient =
@@ -472,13 +546,13 @@ function drawBackground() {
 
   gradient.addColorStop(
     0,
-    `hsl(${hue}deg ${saturation}% 50%)`
+    `hsl(${hue}deg ${saturation}% ${topLightness}%)`
   );
 
 
   gradient.addColorStop(
     1,
-    `hsl(${hue}deg ${saturation}% 25%)`
+    `hsl(${hue}deg ${saturation}% ${bottomLightness}%)`
   );
 
 
@@ -517,8 +591,6 @@ function drawGrid() {
 
   for (let i = 0; i <= 12; i++) {
 
-    // Vertical
-
     ctx.beginPath();
 
     ctx.moveTo(
@@ -533,8 +605,6 @@ function drawGrid() {
 
     ctx.stroke();
 
-
-    // Horizontal
 
     ctx.beginPath();
 
@@ -707,8 +777,6 @@ function drawCurrent() {
   drawShape(previewShape);
 
 
-  // Highlight most recent point.
-
   const last =
     gridToScreen(
       currentPoints[
@@ -781,9 +849,6 @@ canvas.addEventListener(
 
     currentPoints.push(point);
 
-
-    // Line mode:
-    // every pair becomes a separate line.
 
     if (
       mode === 'line' &&
@@ -1043,6 +1108,22 @@ saturationSlider.addEventListener(
 
 
 // ============================================================
+// LIGHTNESS
+// ============================================================
+
+lightnessSlider.addEventListener(
+  'input',
+  () => {
+
+    lightnessValue.textContent =
+      `${lightnessSlider.value}%`;
+
+    draw();
+  }
+);
+
+
+// ============================================================
 // COPY
 // ============================================================
 
@@ -1115,12 +1196,13 @@ document
       // BACKGROUND
       // --------------------------------------------------------
 
-      const hue =
-        Number(hueSlider.value);
-
-
-      const saturation =
-        Number(saturationSlider.value);
+      const {
+        hue,
+        saturation,
+        topLightness,
+        bottomLightness
+      } =
+        getGradientSettings();
 
 
       const gradient =
@@ -1134,13 +1216,13 @@ document
 
       gradient.addColorStop(
         0,
-        `hsl(${hue}deg ${saturation}% 50%)`
+        `hsl(${hue}deg ${saturation}% ${topLightness}%)`
       );
 
 
       gradient.addColorStop(
         1,
-        `hsl(${hue}deg ${saturation}% 25%)`
+        `hsl(${hue}deg ${saturation}% ${bottomLightness}%)`
       );
 
 
