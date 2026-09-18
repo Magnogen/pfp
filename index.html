@@ -16,17 +16,14 @@
   button { flex: 1 1 auto; min-height: 34px; padding: 6px 9px; color: #ddd; background: transparent; border: 1px solid #666; border-radius: 4px; cursor: pointer; white-space: nowrap; }
   button:hover { background: rgba(255,255,255,.1); }
   button.active { background: rgba(255,255,255,.2); border-color: #aaa; }
-  #output { position: fixed; left: 10px; right: 10px; bottom: 10px; width: auto; height: 100px; padding: 8px; color: #ddd; background: rgba(0, 0, 0, 0.7); border: 1px solid #555; border-radius: 6px; font: 11px monospace; resize: none; }
   @media (max-width: 600px) {
     #controls { top: 6px; left: 6px; right: 6px; padding: 7px; gap: 5px; }
     #controls .slider-control { flex: 1 1 100%; min-width: 0; }
     button { min-height: 32px; padding: 5px 7px; font-size: 12px; }
-    #output { left: 6px; right: 6px; bottom: 6px; height: 80px; font-size: 10px; }
   }
   @media (max-width: 380px) {
     #controls { gap: 4px; padding: 6px; }
     button { font-size: 11px; padding: 4px 5px; }
-    #output { height: 65px; }
   }
 </style>
 </head>
@@ -54,10 +51,8 @@
   <button id="finish">Finish</button>
   <button id="undo">Undo</button>
   <button id="clear">Clear</button>
-  <button id="copy">Copy JS</button>
   <button id="exportPNG">Export PNG</button>
 </div>
-<textarea id="output" readonly></textarea>
 <script>
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
@@ -68,7 +63,6 @@ const saturationSlider = document.getElementById('saturation');
 const saturationValue = document.getElementById('saturationValue');
 const lightnessSlider = document.getElementById('lightness');
 const lightnessValue = document.getElementById('lightnessValue');
-const output = document.getElementById('output');
 
 let shapes = [];
 let currentPoints = [];
@@ -159,6 +153,10 @@ function drawGrid() {
 function drawShape(shape) {
   const points = shape.points;
   if (points.length < 2) return;
+  
+  const { spacing } = getGridGeometry();
+  const gridSize = spacing * 12;
+
   ctx.beginPath();
   const first = gridToScreen(points[0]);
   ctx.moveTo(first.x, first.y);
@@ -172,13 +170,14 @@ function drawShape(shape) {
     ctx.fill();
   }
   if (shape.stroke) {
-    ctx.lineWidth = Math.min(window.innerWidth, window.innerHeight) / 16;
+    ctx.lineWidth = gridSize / 16;
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
     ctx.strokeStyle = 'hsl(0deg 0% 88%)';
     ctx.stroke();
   }
 }
+
 
 function drawCurrent() {
   if (currentPoints.length === 0) return;
@@ -203,7 +202,6 @@ function draw() {
   drawGrid();
   for (const shape of shapes) { drawShape(shape); }
   drawCurrent();
-  updateOutput();
 }
 
 canvas.addEventListener('click', event => {
@@ -249,13 +247,6 @@ document.getElementById('clear').addEventListener('click', () => { shapes = []; 
 hueSlider.addEventListener('input', () => { hueValue.textContent = `${hueSlider.value}°`; draw(); });
 saturationSlider.addEventListener('input', () => { saturationValue.textContent = `${saturationSlider.value}%`; draw(); });
 lightnessSlider.addEventListener('input', () => { lightnessValue.textContent = `${lightnessSlider.value}%`; draw(); });
-
-document.getElementById('copy').addEventListener('click', async () => {
-  await navigator.clipboard.writeText(getJavascript());
-  const button = document.getElementById('copy');
-  button.textContent = 'Copied!';
-  setTimeout(() => { button.textContent = 'Copy JS'; }, 1000);
-});
 
 document.getElementById('exportPNG').addEventListener('click', () => {
   const size = 1024;
@@ -310,9 +301,6 @@ document.getElementById('exportPNG').addEventListener('click', () => {
     URL.revokeObjectURL(url);
   }, 'image/png');
 });
-
-function getJavascript() { return `const shapes = ${JSON.stringify(shapes, null, 2)};`; }
-function updateOutput() { output.value = getJavascript(); }
 
 window.addEventListener('resize', resize);
 resize();
