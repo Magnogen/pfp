@@ -88,20 +88,23 @@ function resize() {
 }
 
 function getGridGeometry() {
-  const GRID_PADDING = 64;  
+  const PADDING_TOP = 128 - 16;
+  const PADDING_BOTTOM = 16;
+  const PADDING_LEFT = 16;
+  const PADDING_RIGHT = 16;
   
-  const availableWidth = Math.max(0, window.innerWidth - (GRID_PADDING * 2));
-  const availableHeight = Math.max(0, window.innerHeight - (GRID_PADDING * 2));
+  const availableWidth = Math.max(0, window.innerWidth - (PADDING_LEFT + PADDING_RIGHT));
+  const availableHeight = Math.max(0, window.innerHeight - (PADDING_TOP + PADDING_BOTTOM));
 
   const spacing = Math.min(availableWidth, availableHeight) / 12;
   const size = spacing * 12;
 
-  return {
-    spacing,
-    ox: (window.innerWidth - size) / 2,
-    oy: (window.innerHeight - size) / 2
-  };
+  const ox = PADDING_LEFT + (availableWidth - size) / 2;
+  const oy = PADDING_TOP + (availableHeight - size) / 2;
+
+  return { spacing, ox, oy };
 }
+
 
 
 function screenToGrid(clientX, clientY) {
